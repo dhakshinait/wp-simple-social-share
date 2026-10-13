@@ -1,5 +1,5 @@
 === Simple Social Share ===
-Contributors: wpsimplesocialshare
+Contributors: Dhakshina
 Tags: social share, facebook, twitter, linkedin, email
 Requires at least: 5.8
 Tested up to: 6.7
