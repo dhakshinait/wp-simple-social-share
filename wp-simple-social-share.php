@@ -1,12 +1,13 @@
 <?php
 /**
  * Plugin Name:       Simple Social Share
- * Plugin URI:        https://github.com/wp-simple-social-share
+ * Plugin URI:        https://github.com/dhakshinait/wp-simple-social-share/
  * Description:       Minimal social share buttons (Facebook, X, LinkedIn, WhatsApp, Telegram, Reddit, Pinterest, Email, Copy link). Place via shortcode or widget.
  * Version:           1.1.0
  * Requires at least: 5.8
  * Requires PHP:      7.4
  * Author:            Dhakshina
+ * Author URI:        https://github.com/dhakshinait/wp-simple-social-share/
  * License:           GPL-2.0-or-later
  * License URI:       https://www.gnu.org/licenses/gpl-2.0.html
  * Text Domain:       wp-simple-social-share
