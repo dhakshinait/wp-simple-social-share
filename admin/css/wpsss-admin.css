@@ -21,7 +21,28 @@
 	margin-left: 1.5em;
 }
 
-.wpsss-settings-wrap .wpsss-usage-list code {
+.wpsss-settings-wrap .wpsss-usage-list code,
+.wpsss-settings-wrap .wpsss-overrides-table code,
+.wpsss-settings-wrap .wpsss-shortcode-example {
 	background: #f0f0f1;
 	padding: 2px 6px;
+}
+
+.wpsss-settings-wrap .wpsss-overrides-table {
+	max-width: 900px;
+	margin: 1em 0;
+}
+
+.wpsss-settings-wrap .wpsss-overrides-table th,
+.wpsss-settings-wrap .wpsss-overrides-table td {
+	padding: 8px 12px;
+	vertical-align: top;
+}
+
+.wpsss-settings-wrap .wpsss-shortcode-example {
+	display: inline-block;
+	max-width: 100%;
+	margin-top: 0.35em;
+	white-space: pre-wrap;
+	word-break: break-word;
 }

@@ -94,6 +94,22 @@ class WPSSS_Settings {
 		);
 
 		add_settings_field(
+			'mobile_horizontal',
+			__( 'Mobile layout', 'wp-simple-social-share' ),
+			array( $this, 'render_mobile_horizontal_field' ),
+			'wpsss-settings',
+			'wpsss_appearance'
+		);
+
+		add_settings_field(
+			'mobile_breakpoint',
+			__( 'Mobile breakpoint (px)', 'wp-simple-social-share' ),
+			array( $this, 'render_mobile_breakpoint_field' ),
+			'wpsss-settings',
+			'wpsss_appearance'
+		);
+
+		add_settings_field(
 			'icon_shape',
 			__( 'Icon shape', 'wp-simple-social-share' ),
 			array( $this, 'render_shape_field' ),
@@ -310,6 +326,12 @@ class WPSSS_Settings {
 			$output['layout'] = wpsss_normalize_layout( $input['layout'] );
 		}
 
+		$output['mobile_horizontal'] = ! empty( $input['mobile_horizontal'] );
+
+		if ( isset( $input['mobile_breakpoint'] ) ) {
+			$output['mobile_breakpoint'] = min( 1600, max( 320, absint( $input['mobile_breakpoint'] ) ) );
+		}
+
 		if ( isset( $input['icon_shape'] ) ) {
 			$output['icon_shape'] = wpsss_normalize_icon_shape( $input['icon_shape'] );
 		}
@@ -459,6 +481,36 @@ class WPSSS_Settings {
 			);
 		}
 		echo '</fieldset>';
+	}
+
+	/**
+	 * Switch vertical icons to horizontal on mobile.
+	 */
+	public function render_mobile_horizontal_field() {
+		$options = wpsss_get_options();
+		$checked = ! empty( $options['mobile_horizontal'] );
+
+		printf(
+			'<label><input type="checkbox" name="%1$s[mobile_horizontal]" value="1" %2$s /> %3$s</label>',
+			esc_attr( self::OPTION_KEY ),
+			checked( $checked, true, false ),
+			esc_html__( 'Switch vertical icons to horizontal on mobile', 'wp-simple-social-share' )
+		);
+		echo '<p class="description">' . esc_html__( 'Only applies when Icon layout is set to Vertical.', 'wp-simple-social-share' ) . '</p>';
+	}
+
+	/**
+	 * Mobile breakpoint number field.
+	 */
+	public function render_mobile_breakpoint_field() {
+		$this->render_number_field(
+			array(
+				'key' => 'mobile_breakpoint',
+				'min' => 320,
+				'max' => 1600,
+			)
+		);
+		echo '<p class="description">' . esc_html__( 'Viewport width at or below which vertical icons switch to horizontal (default 768).', 'wp-simple-social-share' ) . '</p>';
 	}
 
 	/**
@@ -650,12 +702,69 @@ class WPSSS_Settings {
 			<h2><?php esc_html_e( 'How to display', 'wp-simple-social-share' ); ?></h2>
 			<ul class="wpsss-usage-list">
 				<li><?php esc_html_e( 'Shortcode:', 'wp-simple-social-share' ); ?> <code>[wp_simple_social_share]</code></li>
-				<li>
-					<?php esc_html_e( 'Shortcode appearance overrides (optional):', 'wp-simple-social-share' ); ?>
-					<code>[wp_simple_social_share layout="vertical" shape="circle" bg_color="#1a2744" bg_color_hover="#2a3a5c" icon_color="#ffffff" icon_color_hover="#eeeeee"]</code>
-				</li>
 				<li><?php esc_html_e( 'Widget: Appearance → Widgets → Simple Social Share', 'wp-simple-social-share' ); ?></li>
 			</ul>
+
+			<h3><?php esc_html_e( 'Shortcode appearance overrides (optional)', 'wp-simple-social-share' ); ?></h3>
+			<p class="description">
+				<?php esc_html_e( 'Pass any of these attributes on the shortcode. Omitted attributes use the settings above.', 'wp-simple-social-share' ); ?>
+			</p>
+			<table class="widefat striped wpsss-overrides-table">
+				<thead>
+					<tr>
+						<th scope="col"><?php esc_html_e( 'Attribute', 'wp-simple-social-share' ); ?></th>
+						<th scope="col"><?php esc_html_e( 'Values', 'wp-simple-social-share' ); ?></th>
+						<th scope="col"><?php esc_html_e( 'Notes', 'wp-simple-social-share' ); ?></th>
+					</tr>
+				</thead>
+				<tbody>
+					<?php
+					$override_rows = array(
+						array( 'url', 'https://…', __( 'Share URL override', 'wp-simple-social-share' ) ),
+						array( 'title', __( 'text', 'wp-simple-social-share' ), __( 'Share title override', 'wp-simple-social-share' ) ),
+						array(
+							'networks',
+							'facebook, x, linkedin, whatsapp, telegram, reddit, pinterest, email, copy, feed',
+							__( 'Comma-separated icons for this shortcode only (overrides settings). Aliases: twitter → x, rss → feed', 'wp-simple-social-share' ),
+						),
+						array( 'feed_url', 'https://…', __( 'RSS feed URL (when Feed icon is enabled)', 'wp-simple-social-share' ) ),
+						array( 'layout', 'horizontal | vertical', __( 'Icon arrangement', 'wp-simple-social-share' ) ),
+						array( 'mobile_horizontal', '1 | 0 | true | false', __( 'Switch vertical to horizontal on mobile', 'wp-simple-social-share' ) ),
+						array( 'mobile_breakpoint', __( 'number (px)', 'wp-simple-social-share' ), __( 'Max width for the mobile switch (default 768)', 'wp-simple-social-share' ) ),
+						array( 'shape / icon_shape', 'square | circle', __( 'Icon shape', 'wp-simple-social-share' ) ),
+						array( 'bg_color', '#1a2744', __( 'Button background', 'wp-simple-social-share' ) ),
+						array( 'bg_color_hover', '#hex', __( 'Background on hover', 'wp-simple-social-share' ) ),
+						array( 'icon_color', '#hex', __( 'Icon color', 'wp-simple-social-share' ) ),
+						array( 'icon_color_hover', '#hex', __( 'Icon color on hover', 'wp-simple-social-share' ) ),
+						array( 'border_width', __( 'number (px)', 'wp-simple-social-share' ), __( 'Border thickness', 'wp-simple-social-share' ) ),
+						array( 'border_color', '#hex', __( 'Border color', 'wp-simple-social-share' ) ),
+						array( 'border_color_hover', '#hex', __( 'Border color on hover', 'wp-simple-social-share' ) ),
+						array( 'border_radius', __( 'number (px)', 'wp-simple-social-share' ), __( 'Used for square shape only', 'wp-simple-social-share' ) ),
+						array( 'box_shadow_x', __( 'number (px)', 'wp-simple-social-share' ), __( 'Shadow X offset', 'wp-simple-social-share' ) ),
+						array( 'box_shadow_y', __( 'number (px)', 'wp-simple-social-share' ), __( 'Shadow Y offset', 'wp-simple-social-share' ) ),
+						array( 'box_shadow_blur', __( 'number (px)', 'wp-simple-social-share' ), __( 'Shadow blur', 'wp-simple-social-share' ) ),
+						array( 'box_shadow_spread', __( 'number (px)', 'wp-simple-social-share' ), __( 'Shadow spread', 'wp-simple-social-share' ) ),
+						array( 'box_shadow_color', '#hex / rgb() / rgba()', __( 'Shadow color (e.g. rgba(0,0,0,0.25))', 'wp-simple-social-share' ) ),
+						array( 'icon_padding', __( 'number (px)', 'wp-simple-social-share' ), __( 'Inner padding', 'wp-simple-social-share' ) ),
+						array( 'icon_width', __( 'number (px)', 'wp-simple-social-share' ), __( 'Button width', 'wp-simple-social-share' ) ),
+						array( 'icon_height', __( 'number (px)', 'wp-simple-social-share' ), __( 'Button height', 'wp-simple-social-share' ) ),
+					);
+
+					foreach ( $override_rows as $row ) {
+						printf(
+							'<tr><td><code>%1$s</code></td><td>%2$s</td><td>%3$s</td></tr>',
+							esc_html( $row[0] ),
+							esc_html( $row[1] ),
+							esc_html( $row[2] )
+						);
+					}
+					?>
+				</tbody>
+			</table>
+			<p>
+				<?php esc_html_e( 'Example:', 'wp-simple-social-share' ); ?>
+				<code class="wpsss-shortcode-example">[wp_simple_social_share networks="facebook,whatsapp,email" layout="vertical" mobile_horizontal="1" mobile_breakpoint="768" shape="circle" bg_color="#1a2744" bg_color_hover="#2a3a5c" icon_color="#ffffff" icon_color_hover="#eeeeee" border_width="0" border_color="#000000" border_color_hover="#000000" border_radius="4" box_shadow_x="0" box_shadow_y="2" box_shadow_blur="6" box_shadow_spread="0" box_shadow_color="rgba(0,0,0,0.25)" icon_padding="8" icon_width="40" icon_height="40"]</code>
+			</p>
 		</div>
 		<?php
 	}

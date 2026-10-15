@@ -3,7 +3,7 @@
  * Plugin Name:       Simple Social Share
  * Plugin URI:        https://github.com/dhakshinait/wp-simple-social-share/
  * Description:       Minimal social share buttons (Facebook, X, LinkedIn, WhatsApp, Telegram, Reddit, Pinterest, Email, Copy link). Place via shortcode or widget.
- * Version:           1.2.0
+ * Version:           1.3.0
  * Requires at least: 5.8
  * Requires PHP:      7.4
  * Author:            Dhakshina
@@ -15,7 +15,7 @@
 
 defined( 'ABSPATH' ) || exit;
 
-define( 'WPSSS_VERSION', '1.2.0' );
+define( 'WPSSS_VERSION', '1.3.0' );
 define( 'WPSSS_PLUGIN_FILE', __FILE__ );
 define( 'WPSSS_PLUGIN_DIR', plugin_dir_path( __FILE__ ) );
 define( 'WPSSS_PLUGIN_URL', plugin_dir_url( __FILE__ ) );
@@ -46,8 +46,10 @@ function wpsss_default_options() {
 			'feed'      => false,
 		),
 		'feed_url'           => '',
-		'layout'             => 'horizontal',
-		'icon_shape'         => 'square',
+		'layout'               => 'horizontal',
+		'mobile_horizontal'    => true,
+		'mobile_breakpoint'    => 768,
+		'icon_shape'           => 'square',
 		'bg_color'           => '#1a2744',
 		'bg_color_hover'     => '#2a3a5c',
 		'icon_color'         => '#ffffff',
@@ -98,6 +100,84 @@ function wpsss_get_options() {
  */
 function wpsss_normalize_layout( $layout ) {
 	return ( 'vertical' === $layout ) ? 'vertical' : 'horizontal';
+}
+
+/**
+ * Parse a comma/space-separated networks list into an options map.
+ *
+ * Unknown slugs are ignored. Returns null when the list is empty or has no valid slugs
+ * so callers can keep settings as the fallback.
+ *
+ * @param mixed $raw Shortcode attribute or similar.
+ * @return array<string, bool>|null
+ */
+function wpsss_parse_networks_attr( $raw ) {
+	if ( ! is_string( $raw ) ) {
+		return null;
+	}
+
+	$raw = trim( $raw );
+	if ( '' === $raw ) {
+		return null;
+	}
+
+	$parts = preg_split( '/[\s,]+/', strtolower( $raw ), -1, PREG_SPLIT_NO_EMPTY );
+	if ( empty( $parts ) ) {
+		return null;
+	}
+
+	$valid   = WPSSS_Networks::get_network_slugs();
+	$aliases = array(
+		'twitter' => 'x',
+		'rss'     => 'feed',
+	);
+	$map     = array_fill_keys( $valid, false );
+	$found   = false;
+
+	foreach ( $parts as $part ) {
+		if ( isset( $aliases[ $part ] ) ) {
+			$part = $aliases[ $part ];
+		}
+		if ( in_array( $part, $valid, true ) ) {
+			$map[ $part ] = true;
+			$found        = true;
+		}
+	}
+
+	return $found ? $map : null;
+}
+
+/**
+ * Normalize a boolean option from settings or shortcode.
+ *
+ * @param mixed $value Raw value.
+ * @param bool  $default Default when empty/unknown.
+ * @return bool
+ */
+function wpsss_normalize_bool( $value, $default = false ) {
+	if ( is_bool( $value ) ) {
+		return $value;
+	}
+	if ( is_int( $value ) || is_float( $value ) ) {
+		return (bool) $value;
+	}
+	if ( ! is_string( $value ) ) {
+		return (bool) $default;
+	}
+
+	$value = strtolower( trim( $value ) );
+	if ( '' === $value ) {
+		return (bool) $default;
+	}
+
+	if ( in_array( $value, array( '1', 'true', 'yes', 'on' ), true ) ) {
+		return true;
+	}
+	if ( in_array( $value, array( '0', 'false', 'no', 'off' ), true ) ) {
+		return false;
+	}
+
+	return (bool) $default;
 }
 
 /**
@@ -198,8 +278,23 @@ function wpsss_apply_option_overrides( $options, $overrides ) {
 		return $options;
 	}
 
+	if ( isset( $overrides['networks'] ) && '' !== $overrides['networks'] ) {
+		$networks = wpsss_parse_networks_attr( $overrides['networks'] );
+		if ( null !== $networks ) {
+			$options['networks'] = $networks;
+		}
+	}
+
 	if ( ! empty( $overrides['layout'] ) ) {
 		$options['layout'] = wpsss_normalize_layout( $overrides['layout'] );
+	}
+
+	if ( isset( $overrides['mobile_horizontal'] ) && '' !== $overrides['mobile_horizontal'] ) {
+		$options['mobile_horizontal'] = wpsss_normalize_bool( $overrides['mobile_horizontal'], true );
+	}
+
+	if ( isset( $overrides['mobile_breakpoint'] ) && '' !== $overrides['mobile_breakpoint'] ) {
+		$options['mobile_breakpoint'] = min( 1600, max( 320, absint( $overrides['mobile_breakpoint'] ) ) );
 	}
 
 	$shape_raw = '';

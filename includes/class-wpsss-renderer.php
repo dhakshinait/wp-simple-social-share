@@ -54,14 +54,41 @@ class WPSSS_Renderer {
 			return '';
 		}
 
-		$layout = wpsss_normalize_layout( isset( $options['layout'] ) ? $options['layout'] : 'horizontal' );
-		$shape  = wpsss_normalize_icon_shape( isset( $options['icon_shape'] ) ? $options['icon_shape'] : 'square' );
+		$layout            = wpsss_normalize_layout( isset( $options['layout'] ) ? $options['layout'] : 'horizontal' );
+		$shape             = wpsss_normalize_icon_shape( isset( $options['icon_shape'] ) ? $options['icon_shape'] : 'square' );
+		$mobile_horizontal = ! empty( $options['mobile_horizontal'] );
+		$breakpoint        = isset( $options['mobile_breakpoint'] ) ? absint( $options['mobile_breakpoint'] ) : 768;
+		$breakpoint        = min( 1600, max( 320, $breakpoint ) );
+
+		$classes = array(
+			'wpsss-share',
+			'wpsss-layout-' . $layout,
+			'wpsss-shape-' . $shape,
+		);
+		if ( 'vertical' === $layout && $mobile_horizontal ) {
+			$classes[] = 'wpsss-mobile-horizontal';
+		}
+
+		$instance_id = function_exists( 'wp_unique_id' )
+			? wp_unique_id( 'wpsss-share-' )
+			: 'wpsss-share-' . uniqid();
+
+		$html = '';
+
+		// Per-instance breakpoint so shortcode overrides work correctly.
+		if ( 'vertical' === $layout && $mobile_horizontal ) {
+			$html .= sprintf(
+				'<style id="%1$s-css">@media (max-width:%2$dpx){#%1$s.wpsss-layout-vertical.wpsss-mobile-horizontal{flex-direction:row;flex-wrap:wrap;align-items:center;}}</style>',
+				esc_attr( $instance_id ),
+				$breakpoint
+			);
+		}
 
 		// Inline CSS vars so size is reserved even before the stylesheet loads.
-		$html = sprintf(
-			'<div class="wpsss-share wpsss-layout-%1$s wpsss-shape-%2$s" role="list" style="%3$s">',
-			esc_attr( $layout ),
-			esc_attr( $shape ),
+		$html .= sprintf(
+			'<div id="%1$s" class="%2$s" role="list" style="%3$s">',
+			esc_attr( $instance_id ),
+			esc_attr( implode( ' ', $classes ) ),
 			esc_attr( wpsss_get_css_variables( $options ) )
 		);
 

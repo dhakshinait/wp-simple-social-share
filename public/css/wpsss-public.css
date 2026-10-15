@@ -32,6 +32,15 @@
 	align-items: flex-start;
 }
 
+/* Fallback when instance-specific media query is not present. */
+@media (max-width: 768px) {
+	.wpsss-share.wpsss-layout-vertical.wpsss-mobile-horizontal {
+		flex-direction: row;
+		flex-wrap: wrap;
+		align-items: center;
+	}
+}
+
 .wpsss-share.wpsss-shape-circle .wpsss-btn {
 	border-radius: 50%;
 }

@@ -1,0 +1,23 @@
+---
+description: Keep README.md and readme.txt in sync when options change
+alwaysApply: true
+---
+
+# Update readme files when options change
+
+Whenever you add, rename, remove, or change behavior of plugin options (settings fields, defaults, shortcode attributes, networks, appearance controls), update **both**:
+
+- `README.md`
+- `readme.txt`
+
+## What to update
+
+1. **Settings defaults table / description** — new or changed options and defaults
+2. **Shortcode appearance overrides** — full attribute list with values and notes (keep in sync with the settings page help table)
+3. **Example shortcode** — include new attributes when documenting overrides
+4. **Features / Description bullets** — mention user-facing capabilities
+5. **Changelog** in `readme.txt` — note the change under the current version (or add a version bump entry if releasing)
+
+## Do not skip
+
+Do not treat readme updates as optional follow-up. Ship them in the same change set as the feature.

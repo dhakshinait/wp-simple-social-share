@@ -19,13 +19,54 @@ Basic usage:
 [wp_simple_social_share]
 ```
 
-You can override appearance (and share target) on each shortcode. Any attribute you omit falls back to **Settings → Simple Social Share**.
+#### Shortcode appearance overrides (optional)
+
+Pass any of these attributes on the shortcode. Omitted attributes use **Settings → Simple Social Share**.
+
+| Attribute | Values | Notes |
+|-----------|--------|--------|
+| `url` | `https://…` | Share URL override |
+| `title` | text | Share title override |
+| `networks` | comma-separated slugs | Icons for this shortcode only (overrides settings). Slugs: `facebook`, `x`, `linkedin`, `whatsapp`, `telegram`, `reddit`, `pinterest`, `email`, `copy`, `feed`. Aliases: `twitter` → `x`, `rss` → `feed` |
+| `feed_url` | `https://…` | RSS feed URL (when Feed icon is enabled) |
+| `layout` | `horizontal` \| `vertical` | Icon arrangement |
+| `mobile_horizontal` | `1` \| `0` \| `true` \| `false` | Switch vertical to horizontal on mobile |
+| `mobile_breakpoint` | number (px) | Max width for the mobile switch (default 768) |
+| `shape` / `icon_shape` | `square` \| `circle` | Icon shape |
+| `bg_color` | `#hex` (e.g. `#1a2744`) | Button background |
+| `bg_color_hover` | `#hex` | Background on hover |
+| `icon_color` | `#hex` | Icon color |
+| `icon_color_hover` | `#hex` | Icon color on hover |
+| `border_width` | number (px) | Border thickness |
+| `border_color` | `#hex` | Border color |
+| `border_color_hover` | `#hex` | Border color on hover |
+| `border_radius` | number (px) | Used for square shape only |
+| `box_shadow_x` | number (px) | Shadow X offset |
+| `box_shadow_y` | number (px) | Shadow Y offset |
+| `box_shadow_blur` | number (px) | Shadow blur |
+| `box_shadow_spread` | number (px) | Shadow spread |
+| `box_shadow_color` | `#hex` / `rgb()` / `rgba()` | Shadow color (e.g. `rgba(0,0,0,0.25)`) |
+| `icon_padding` | number (px) | Inner padding |
+| `icon_width` | number (px) | Button width |
+| `icon_height` | number (px) | Button height |
+
+Show only specific icons on one page:
+
+```
+[wp_simple_social_share networks="facebook,whatsapp,email"]
+```
+
+Example with all appearance overrides:
 
 ```
 [wp_simple_social_share
   url="https://example.com/post"
   title="Post title"
+  networks="facebook,x,linkedin,whatsapp"
+  feed_url="https://example.com/feed"
   layout="vertical"
+  mobile_horizontal="1"
+  mobile_breakpoint="768"
   shape="circle"
   bg_color="#1a2744"
   bg_color_hover="#2a3a5c"
@@ -46,32 +87,6 @@ You can override appearance (and share target) on each shortcode. Any attribute 
 ]
 ```
 
-#### Shortcode attributes
-
-| Attribute | Values | Notes |
-|-----------|--------|--------|
-| `url` | `https://…` | Share URL override |
-| `title` | text | Share title override |
-| `feed_url` | `https://…` | RSS feed URL override (when Feed icon is enabled) |
-| `layout` | `horizontal`, `vertical` | Icon arrangement |
-| `shape` or `icon_shape` | `square`, `circle` | Icon shape |
-| `bg_color` | hex (`#1a2744`) | Button background |
-| `bg_color_hover` | hex | Background on hover |
-| `icon_color` | hex | Icon color |
-| `icon_color_hover` | hex | Icon color on hover |
-| `border_width` | number (px) | Border thickness |
-| `border_color` | hex | Border color |
-| `border_color_hover` | hex | Border color on hover |
-| `border_radius` | number (px) | Used for square shape only |
-| `box_shadow_x` | number (px) | Shadow X offset |
-| `box_shadow_y` | number (px) | Shadow Y offset |
-| `box_shadow_blur` | number (px) | Shadow blur |
-| `box_shadow_spread` | number (px) | Shadow spread |
-| `box_shadow_color` | hex / `rgb()` / `rgba()` | Shadow color (e.g. `rgba(0,0,0,0.25)`) |
-| `icon_padding` | number (px) | Inner padding |
-| `icon_width` | number (px) | Button width |
-| `icon_height` | number (px) | Button height |
-
 On singular posts, the current post URL and title are used when `url` / `title` are omitted. Outside that context, the site home URL and blog name are used.
 
 ### Widget
@@ -87,6 +102,8 @@ Add it to a sidebar (for example under a table of contents) to match a left-rail
 | Networks | Facebook, X, LinkedIn, WhatsApp, Email on by default; Telegram, Reddit, Pinterest, Copy link, RSS Feed off |
 | RSS feed URL | Empty (falls back to the site RSS2 feed) |
 | Icon layout | Horizontal |
+| Mobile layout | Switch vertical → horizontal on mobile (on) |
+| Mobile breakpoint | `768` px |
 | Icon shape | Square (or Circle) |
 | Background color | `#1a2744` |
 | Background color (hover) | `#2a3a5c` |

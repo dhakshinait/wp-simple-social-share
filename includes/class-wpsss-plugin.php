@@ -13,11 +13,18 @@ defined( 'ABSPATH' ) || exit;
 class WPSSS_Plugin {
 
 	/**
-	 * Whether public assets were enqueued this request.
+	 * Whether public CSS was enqueued this request.
 	 *
 	 * @var bool
 	 */
 	private static $assets_enqueued = false;
+
+	/**
+	 * Whether the copy-link script was enqueued this request.
+	 *
+	 * @var bool
+	 */
+	private static $script_enqueued = false;
 
 	/**
 	 * Register WordPress hooks.
@@ -71,17 +78,21 @@ class WPSSS_Plugin {
 
 	/**
 	 * Enqueue public CSS/JS and inject CSS custom properties from settings.
+	 *
+	 * @param array<string, mixed>|null $options Options for this render (used for copy script).
 	 */
-	public static function enqueue_assets() {
-		if ( self::$assets_enqueued ) {
-			return;
+	public static function enqueue_assets( $options = null ) {
+		if ( null === $options ) {
+			$options = wpsss_get_options();
 		}
 
-		wp_enqueue_style( 'wpsss-public' );
-		wp_add_inline_style( 'wpsss-public', '.wpsss-share{' . wpsss_get_css_variables() . '}' );
+		if ( ! self::$assets_enqueued ) {
+			wp_enqueue_style( 'wpsss-public' );
+			wp_add_inline_style( 'wpsss-public', '.wpsss-share{' . wpsss_get_css_variables() . '}' );
+			self::$assets_enqueued = true;
+		}
 
-		$options = wpsss_get_options();
-		if ( ! empty( $options['networks']['copy'] ) ) {
+		if ( ! self::$script_enqueued && ! empty( $options['networks']['copy'] ) ) {
 			wp_enqueue_script( 'wpsss-public' );
 			wp_localize_script(
 				'wpsss-public',
@@ -90,9 +101,8 @@ class WPSSS_Plugin {
 					'copiedLabel' => __( 'Copied!', 'wp-simple-social-share' ),
 				)
 			);
+			self::$script_enqueued = true;
 		}
-
-		self::$assets_enqueued = true;
 	}
 
 	/**
@@ -108,8 +118,11 @@ class WPSSS_Plugin {
 			array(
 				'url'                  => '',
 				'title'                => '',
+				'networks'             => '',
 				'feed_url'             => '',
 				'layout'               => '',
+				'mobile_horizontal'    => '',
+				'mobile_breakpoint'    => '',
 				'shape'                => '',
 				'icon_shape'           => '',
 				'bg_color'             => '',
@@ -141,7 +154,8 @@ class WPSSS_Plugin {
 		$overrides = $atts;
 		unset( $overrides['url'], $overrides['title'] );
 
-		self::enqueue_assets();
+		$options = wpsss_apply_option_overrides( wpsss_get_options(), $overrides );
+		self::enqueue_assets( $options );
 
 		return WPSSS_Renderer::render(
 			array(
