@@ -98,14 +98,36 @@ class WPSSS_Plugin {
 	/**
 	 * Shortcode callback.
 	 *
+	 * Appearance attributes override Settings → Simple Social Share for that instance.
+	 *
 	 * @param array<string, string>|string $atts Shortcode attributes.
 	 * @return string
 	 */
 	public function render_shortcode( $atts ) {
 		$atts = shortcode_atts(
 			array(
-				'url'   => '',
-				'title' => '',
+				'url'                  => '',
+				'title'                => '',
+				'feed_url'             => '',
+				'layout'               => '',
+				'shape'                => '',
+				'icon_shape'           => '',
+				'bg_color'             => '',
+				'bg_color_hover'       => '',
+				'icon_color'           => '',
+				'icon_color_hover'     => '',
+				'border_width'         => '',
+				'border_color'         => '',
+				'border_color_hover'   => '',
+				'border_radius'        => '',
+				'box_shadow_x'         => '',
+				'box_shadow_y'         => '',
+				'box_shadow_blur'      => '',
+				'box_shadow_spread'    => '',
+				'box_shadow_color'     => '',
+				'icon_padding'         => '',
+				'icon_width'           => '',
+				'icon_height'          => '',
 			),
 			$atts,
 			'wp_simple_social_share'
@@ -116,12 +138,16 @@ class WPSSS_Plugin {
 			$url = esc_url_raw( $atts['url'], array( 'http', 'https' ) );
 		}
 
+		$overrides = $atts;
+		unset( $overrides['url'], $overrides['title'] );
+
 		self::enqueue_assets();
 
 		return WPSSS_Renderer::render(
 			array(
-				'url'   => $url,
-				'title' => sanitize_text_field( $atts['title'] ),
+				'url'     => $url,
+				'title'   => sanitize_text_field( $atts['title'] ),
+				'options' => $overrides,
 			)
 		);
 	}

@@ -28,6 +28,7 @@ class WPSSS_Networks {
 			'pinterest',
 			'email',
 			'copy',
+			'feed',
 		);
 	}
 
@@ -72,6 +73,7 @@ class WPSSS_Networks {
 			'pinterest' => __( 'Pinterest', 'wp-simple-social-share' ),
 			'email'     => __( 'Email', 'wp-simple-social-share' ),
 			'copy'      => __( 'Copy link', 'wp-simple-social-share' ),
+			'feed'      => __( 'RSS Feed', 'wp-simple-social-share' ),
 		);
 	}
 
@@ -91,7 +93,28 @@ class WPSSS_Networks {
 			'pinterest' => __( 'Share on Pinterest', 'wp-simple-social-share' ),
 			'email'     => __( 'Share by Email', 'wp-simple-social-share' ),
 			'copy'      => __( 'Copy link', 'wp-simple-social-share' ),
+			'feed'      => __( 'RSS Feed', 'wp-simple-social-share' ),
 		);
+	}
+
+	/**
+	 * Resolve the feed URL from options or the site RSS2 feed.
+	 *
+	 * @param array<string, mixed>|null $options Plugin options.
+	 * @return string
+	 */
+	public static function resolve_feed_url( $options = null ) {
+		if ( null === $options ) {
+			$options = wpsss_get_options();
+		}
+
+		$custom = isset( $options['feed_url'] ) ? trim( (string) $options['feed_url'] ) : '';
+		if ( '' !== $custom ) {
+			$url = esc_url_raw( $custom, array( 'http', 'https' ) );
+			return $url ? $url : '';
+		}
+
+		return (string) get_feed_link( 'rss2' );
 	}
 
 	/**
@@ -155,12 +178,13 @@ class WPSSS_Networks {
 	/**
 	 * Build the share URL for a network.
 	 *
-	 * @param string $network Network slug.
-	 * @param string $url     Page URL to share.
-	 * @param string $title   Page title to share.
+	 * @param string                    $network Network slug.
+	 * @param string                    $url     Page URL to share.
+	 * @param string                    $title   Page title to share.
+	 * @param array<string, mixed>|null $options Optional options (used for feed URL).
 	 * @return string
 	 */
-	public static function get_share_url( $network, $url, $title ) {
+	public static function get_share_url( $network, $url, $title, $options = null ) {
 		$encoded_url   = rawurlencode( $url );
 		$encoded_title = rawurlencode( $title );
 		$whatsapp_text = rawurlencode( $title . ' ' . $url );
@@ -192,6 +216,9 @@ class WPSSS_Networks {
 
 			case 'copy':
 				return $url;
+
+			case 'feed':
+				return self::resolve_feed_url( $options );
 
 			default:
 				return '';
@@ -227,6 +254,7 @@ class WPSSS_Networks {
 			'pinterest' => 'M12 2C6.48 2 2 6.48 2 12c0 4.24 2.65 7.87 6.39 9.32-.09-.79-.17-2.01.04-2.87.18-.78 1.19-4.96 1.19-4.96s-.3-.61-.3-1.5c0-1.41.82-2.46 1.84-2.46.86 0 1.28.65 1.28 1.43 0 .87-.55 2.17-.84 3.38-.24 1.01.5 1.83 1.49 1.83 1.79 0 3.17-1.89 3.17-4.61 0-2.41-1.73-4.1-4.21-4.1-2.87 0-4.55 2.15-4.55 4.37 0 .87.33 1.8.75 2.31.08.1.09.19.07.29l-.28 1.15c-.04.18-.15.22-.34.13-1.28-.6-2.08-2.47-2.08-3.98 0-3.24 2.35-6.22 6.79-6.22 3.56 0 6.34 2.54 6.34 5.93 0 3.54-2.23 6.38-5.33 6.38-1.04 0-2.02-.54-2.35-1.18l-.64 2.44c-.23.89-.86 2.01-1.28 2.69A10 10 0 0 0 12 22c5.52 0 10-4.48 10-10S17.52 2 12 2z',
 			'email'     => 'M3.4 20.4 20.85 12.92a.6.6 0 0 0 0-1.09L3.4 4.35a.6.6 0 0 0-.87.66l1.7 6.2a.6.6 0 0 0 .45.42l7.36 1.45-7.36 1.45a.6.6 0 0 0-.45.42l-1.7 6.2a.6.6 0 0 0 .87.66z',
 			'copy'      => 'M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z',
+			'feed'      => 'M6.18 15.64a2.18 2.18 0 0 1 2.18 2.18C8.36 19.02 7.56 19.82 6.18 19.82 4.8 19.82 4 19.02 4 17.82c0-1.2.8-2.18 2.18-2.18zM4 4.36c7.88 0 14.28 6.4 14.28 14.28h-3.09c0-6.18-5.01-11.19-11.19-11.19V4.36zm0 5.46c4.86 0 8.82 3.96 8.82 8.82H9.73c0-3.16-2.57-5.73-5.73-5.73V9.82z',
 		);
 
 		if ( ! isset( $paths[ $network ] ) ) {

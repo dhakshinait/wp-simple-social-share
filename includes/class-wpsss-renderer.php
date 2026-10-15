@@ -15,11 +15,12 @@ class WPSSS_Renderer {
 	/**
 	 * Render share buttons.
 	 *
-	 * @param array<string, string> $args {
+	 * @param array<string, mixed> $args {
 	 *     Optional. Render arguments.
 	 *
-	 *     @type string $url   Override share URL.
-	 *     @type string $title Override share title.
+	 *     @type string               $url     Override share URL.
+	 *     @type string               $title   Override share title.
+	 *     @type array<string,mixed>  $options Optional options override (merged with saved settings).
 	 * }
 	 * @return string
 	 */
@@ -27,17 +28,23 @@ class WPSSS_Renderer {
 		$args = wp_parse_args(
 			$args,
 			array(
-				'url'   => '',
-				'title' => '',
+				'url'     => '',
+				'title'   => '',
+				'options' => null,
 			)
 		);
 
 		$options = wpsss_get_options();
-		$btn_w   = max( 1, absint( $options['icon_width'] ) );
-		$btn_h   = max( 1, absint( $options['icon_height'] ) );
-		$pad     = absint( $options['icon_padding'] );
-		$svg_w   = max( 1, $btn_w - ( 2 * $pad ) );
-		$svg_h   = max( 1, $btn_h - ( 2 * $pad ) );
+		if ( is_array( $args['options'] ) ) {
+			$options = wpsss_apply_option_overrides( $options, $args['options'] );
+		}
+
+		$btn_w        = max( 1, absint( $options['icon_width'] ) );
+		$btn_h        = max( 1, absint( $options['icon_height'] ) );
+		$pad          = absint( $options['icon_padding'] );
+		$border_width = absint( $options['border_width'] );
+		$svg_w        = max( 1, $btn_w - ( 2 * $pad ) - ( 2 * $border_width ) );
+		$svg_h        = max( 1, $btn_h - ( 2 * $pad ) - ( 2 * $border_width ) );
 
 		$context = WPSSS_Networks::resolve_share_context( $args['url'], $args['title'] );
 		$labels  = WPSSS_Networks::get_labels();
@@ -47,14 +54,19 @@ class WPSSS_Renderer {
 			return '';
 		}
 
+		$layout = wpsss_normalize_layout( isset( $options['layout'] ) ? $options['layout'] : 'horizontal' );
+		$shape  = wpsss_normalize_icon_shape( isset( $options['icon_shape'] ) ? $options['icon_shape'] : 'square' );
+
 		// Inline CSS vars so size is reserved even before the stylesheet loads.
 		$html = sprintf(
-			'<div class="wpsss-share" role="list" style="%s">',
+			'<div class="wpsss-share wpsss-layout-%1$s wpsss-shape-%2$s" role="list" style="%3$s">',
+			esc_attr( $layout ),
+			esc_attr( $shape ),
 			esc_attr( wpsss_get_css_variables( $options ) )
 		);
 
 		foreach ( $enabled as $network ) {
-			$share_url = WPSSS_Networks::get_share_url( $network, $context['url'], $context['title'] );
+			$share_url = WPSSS_Networks::get_share_url( $network, $context['url'], $context['title'], $options );
 			if ( '' === $share_url ) {
 				continue;
 			}

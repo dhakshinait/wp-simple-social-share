@@ -70,11 +70,35 @@ class WPSSS_Settings {
 			'wpsss_networks'
 		);
 
+		add_settings_field(
+			'feed_url',
+			__( 'RSS feed URL', 'wp-simple-social-share' ),
+			array( $this, 'render_feed_url_field' ),
+			'wpsss-settings',
+			'wpsss_networks'
+		);
+
 		add_settings_section(
 			'wpsss_appearance',
 			__( 'Appearance', 'wp-simple-social-share' ),
 			array( $this, 'render_section_intro' ),
 			'wpsss-settings'
+		);
+
+		add_settings_field(
+			'layout',
+			__( 'Icon layout', 'wp-simple-social-share' ),
+			array( $this, 'render_layout_field' ),
+			'wpsss-settings',
+			'wpsss_appearance'
+		);
+
+		add_settings_field(
+			'icon_shape',
+			__( 'Icon shape', 'wp-simple-social-share' ),
+			array( $this, 'render_shape_field' ),
+			'wpsss-settings',
+			'wpsss_appearance'
 		);
 
 		add_settings_field(
@@ -114,16 +138,103 @@ class WPSSS_Settings {
 		);
 
 		add_settings_field(
-			'border_radius',
-			__( 'Border radius (px)', 'wp-simple-social-share' ),
+			'border_width',
+			__( 'Border width (px)', 'wp-simple-social-share' ),
 			array( $this, 'render_number_field' ),
 			'wpsss-settings',
 			'wpsss_appearance',
 			array(
-				'key' => 'border_radius',
+				'key' => 'border_width',
 				'min' => 0,
+				'max' => 20,
+			)
+		);
+
+		add_settings_field(
+			'border_color',
+			__( 'Border color', 'wp-simple-social-share' ),
+			array( $this, 'render_color_field' ),
+			'wpsss-settings',
+			'wpsss_appearance',
+			array( 'key' => 'border_color' )
+		);
+
+		add_settings_field(
+			'border_color_hover',
+			__( 'Border color (hover)', 'wp-simple-social-share' ),
+			array( $this, 'render_color_field' ),
+			'wpsss-settings',
+			'wpsss_appearance',
+			array( 'key' => 'border_color_hover' )
+		);
+
+		add_settings_field(
+			'border_radius',
+			__( 'Border radius (px)', 'wp-simple-social-share' ),
+			array( $this, 'render_border_radius_field' ),
+			'wpsss-settings',
+			'wpsss_appearance'
+		);
+
+		add_settings_field(
+			'box_shadow_x',
+			__( 'Box shadow X (px)', 'wp-simple-social-share' ),
+			array( $this, 'render_number_field' ),
+			'wpsss-settings',
+			'wpsss_appearance',
+			array(
+				'key' => 'box_shadow_x',
+				'min' => -50,
 				'max' => 50,
 			)
+		);
+
+		add_settings_field(
+			'box_shadow_y',
+			__( 'Box shadow Y (px)', 'wp-simple-social-share' ),
+			array( $this, 'render_number_field' ),
+			'wpsss-settings',
+			'wpsss_appearance',
+			array(
+				'key' => 'box_shadow_y',
+				'min' => -50,
+				'max' => 50,
+			)
+		);
+
+		add_settings_field(
+			'box_shadow_blur',
+			__( 'Box shadow blur (px)', 'wp-simple-social-share' ),
+			array( $this, 'render_number_field' ),
+			'wpsss-settings',
+			'wpsss_appearance',
+			array(
+				'key' => 'box_shadow_blur',
+				'min' => 0,
+				'max' => 100,
+			)
+		);
+
+		add_settings_field(
+			'box_shadow_spread',
+			__( 'Box shadow spread (px)', 'wp-simple-social-share' ),
+			array( $this, 'render_number_field' ),
+			'wpsss-settings',
+			'wpsss_appearance',
+			array(
+				'key' => 'box_shadow_spread',
+				'min' => -50,
+				'max' => 50,
+			)
+		);
+
+		add_settings_field(
+			'box_shadow_color',
+			__( 'Box shadow color', 'wp-simple-social-share' ),
+			array( $this, 'render_css_color_field' ),
+			'wpsss-settings',
+			'wpsss_appearance',
+			array( 'key' => 'box_shadow_color' )
 		);
 
 		add_settings_field(
@@ -185,8 +296,33 @@ class WPSSS_Settings {
 			$output['networks'][ $slug ] = ! empty( $input['networks'][ $slug ] );
 		}
 
-		$color_keys = array( 'bg_color', 'bg_color_hover', 'icon_color', 'icon_color_hover' );
-		foreach ( $color_keys as $key ) {
+		if ( isset( $input['feed_url'] ) ) {
+			$feed_url = trim( (string) $input['feed_url'] );
+			if ( '' === $feed_url ) {
+				$output['feed_url'] = '';
+			} else {
+				$sanitized = esc_url_raw( $feed_url, array( 'http', 'https' ) );
+				$output['feed_url'] = $sanitized ? $sanitized : '';
+			}
+		}
+
+		if ( isset( $input['layout'] ) ) {
+			$output['layout'] = wpsss_normalize_layout( $input['layout'] );
+		}
+
+		if ( isset( $input['icon_shape'] ) ) {
+			$output['icon_shape'] = wpsss_normalize_icon_shape( $input['icon_shape'] );
+		}
+
+		$hex_color_keys = array(
+			'bg_color',
+			'bg_color_hover',
+			'icon_color',
+			'icon_color_hover',
+			'border_color',
+			'border_color_hover',
+		);
+		foreach ( $hex_color_keys as $key ) {
 			if ( isset( $input[ $key ] ) ) {
 				$color = sanitize_hex_color( $input[ $key ] );
 				if ( $color ) {
@@ -195,8 +331,35 @@ class WPSSS_Settings {
 			}
 		}
 
+		if ( isset( $input['box_shadow_color'] ) ) {
+			$shadow_color = wpsss_sanitize_css_color( $input['box_shadow_color'] );
+			if ( $shadow_color ) {
+				$output['box_shadow_color'] = $shadow_color;
+			}
+		}
+
+		if ( isset( $input['border_width'] ) ) {
+			$output['border_width'] = min( 20, absint( $input['border_width'] ) );
+		}
+
 		if ( isset( $input['border_radius'] ) ) {
 			$output['border_radius'] = min( 50, absint( $input['border_radius'] ) );
+		}
+
+		if ( isset( $input['box_shadow_x'] ) ) {
+			$output['box_shadow_x'] = max( -50, min( 50, (int) $input['box_shadow_x'] ) );
+		}
+
+		if ( isset( $input['box_shadow_y'] ) ) {
+			$output['box_shadow_y'] = max( -50, min( 50, (int) $input['box_shadow_y'] ) );
+		}
+
+		if ( isset( $input['box_shadow_blur'] ) ) {
+			$output['box_shadow_blur'] = min( 100, absint( $input['box_shadow_blur'] ) );
+		}
+
+		if ( isset( $input['box_shadow_spread'] ) ) {
+			$output['box_shadow_spread'] = max( -50, min( 50, (int) $input['box_shadow_spread'] ) );
 		}
 
 		if ( isset( $input['icon_padding'] ) ) {
@@ -275,6 +438,89 @@ class WPSSS_Settings {
 	}
 
 	/**
+	 * Layout radio field (horizontal / vertical).
+	 */
+	public function render_layout_field() {
+		$options = wpsss_get_options();
+		$layout  = wpsss_normalize_layout( isset( $options['layout'] ) ? $options['layout'] : 'horizontal' );
+		$choices = array(
+			'horizontal' => __( 'Horizontal', 'wp-simple-social-share' ),
+			'vertical'   => __( 'Vertical', 'wp-simple-social-share' ),
+		);
+
+		echo '<fieldset class="wpsss-layout-field">';
+		foreach ( $choices as $value => $label ) {
+			printf(
+				'<label style="margin-right:12px;"><input type="radio" name="%1$s[layout]" value="%2$s" %3$s /> %4$s</label>',
+				esc_attr( self::OPTION_KEY ),
+				esc_attr( $value ),
+				checked( $layout, $value, false ),
+				esc_html( $label )
+			);
+		}
+		echo '</fieldset>';
+	}
+
+	/**
+	 * Custom RSS feed URL field.
+	 */
+	public function render_feed_url_field() {
+		$options = wpsss_get_options();
+		$value   = isset( $options['feed_url'] ) ? $options['feed_url'] : '';
+		$default = get_feed_link( 'rss2' );
+
+		printf(
+			'<input type="url" class="regular-text" name="%1$s[feed_url]" value="%2$s" placeholder="%3$s" />',
+			esc_attr( self::OPTION_KEY ),
+			esc_attr( $value ),
+			esc_attr( $default )
+		);
+		echo '<p class="description">';
+		echo esc_html__( 'Used when the RSS Feed icon is enabled. Leave empty to use the site RSS2 feed:', 'wp-simple-social-share' );
+		echo ' <code>' . esc_html( $default ) . '</code>';
+		echo '</p>';
+	}
+
+	/**
+	 * Icon shape radio field (square / circle).
+	 */
+	public function render_shape_field() {
+		$options = wpsss_get_options();
+		$shape   = wpsss_normalize_icon_shape( isset( $options['icon_shape'] ) ? $options['icon_shape'] : 'square' );
+		$choices = array(
+			'square' => __( 'Square', 'wp-simple-social-share' ),
+			'circle' => __( 'Circle', 'wp-simple-social-share' ),
+		);
+
+		echo '<fieldset class="wpsss-shape-field">';
+		foreach ( $choices as $value => $label ) {
+			printf(
+				'<label style="margin-right:12px;"><input type="radio" name="%1$s[icon_shape]" value="%2$s" %3$s /> %4$s</label>',
+				esc_attr( self::OPTION_KEY ),
+				esc_attr( $value ),
+				checked( $shape, $value, false ),
+				esc_html( $label )
+			);
+		}
+		echo '</fieldset>';
+		echo '<p class="description">' . esc_html__( 'For a true circle, use equal icon width and height.', 'wp-simple-social-share' ) . '</p>';
+	}
+
+	/**
+	 * Border radius field with note for circle shape.
+	 */
+	public function render_border_radius_field() {
+		$this->render_number_field(
+			array(
+				'key' => 'border_radius',
+				'min' => 0,
+				'max' => 50,
+			)
+		);
+		echo '<p class="description">' . esc_html__( 'Used for square icons only. Circle shape always uses a full round corner.', 'wp-simple-social-share' ) . '</p>';
+	}
+
+	/**
 	 * Network enable/disable checkboxes.
 	 */
 	public function render_networks_field() {
@@ -303,7 +549,7 @@ class WPSSS_Settings {
 	}
 
 	/**
-	 * Color picker field.
+	 * Color picker field (hex).
 	 *
 	 * @param array<string, string> $args Field args.
 	 */
@@ -321,6 +567,28 @@ class WPSSS_Settings {
 			esc_attr( $value ),
 			esc_attr( $default )
 		);
+	}
+
+	/**
+	 * CSS color text field (hex, rgb, or rgba).
+	 *
+	 * @param array<string, string> $args Field args.
+	 */
+	public function render_css_color_field( $args ) {
+		$options  = wpsss_get_options();
+		$defaults = wpsss_default_options();
+		$key      = $args['key'];
+		$value    = isset( $options[ $key ] ) ? $options[ $key ] : '';
+		$default  = isset( $defaults[ $key ] ) ? $defaults[ $key ] : '';
+
+		printf(
+			'<input type="text" class="regular-text" name="%1$s[%2$s]" value="%3$s" placeholder="%4$s" />',
+			esc_attr( self::OPTION_KEY ),
+			esc_attr( $key ),
+			esc_attr( $value ),
+			esc_attr( $default )
+		);
+		echo '<p class="description">' . esc_html__( 'Accepts hex (#000000), rgb(), or rgba() — for example rgba(0,0,0,0.25).', 'wp-simple-social-share' ) . '</p>';
 	}
 
 	/**
@@ -382,6 +650,10 @@ class WPSSS_Settings {
 			<h2><?php esc_html_e( 'How to display', 'wp-simple-social-share' ); ?></h2>
 			<ul class="wpsss-usage-list">
 				<li><?php esc_html_e( 'Shortcode:', 'wp-simple-social-share' ); ?> <code>[wp_simple_social_share]</code></li>
+				<li>
+					<?php esc_html_e( 'Shortcode appearance overrides (optional):', 'wp-simple-social-share' ); ?>
+					<code>[wp_simple_social_share layout="vertical" shape="circle" bg_color="#1a2744" bg_color_hover="#2a3a5c" icon_color="#ffffff" icon_color_hover="#eeeeee"]</code>
+				</li>
 				<li><?php esc_html_e( 'Widget: Appearance → Widgets → Simple Social Share', 'wp-simple-social-share' ); ?></li>
 			</ul>
 		</div>

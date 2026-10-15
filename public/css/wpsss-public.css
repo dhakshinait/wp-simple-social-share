@@ -11,14 +11,29 @@
 	--wpsss-padding: 8px;
 	--wpsss-width: 40px;
 	--wpsss-height: 40px;
+	--wpsss-border-width: 0px;
+	--wpsss-border-color: #1a2744;
+	--wpsss-border-color-hover: #2a3a5c;
+	--wpsss-shadow: none;
 
 	display: flex;
+	flex-direction: row;
 	flex-wrap: wrap;
 	align-items: center;
 	gap: 8px;
 	margin: 0;
 	padding: 0;
 	list-style: none;
+}
+
+.wpsss-share.wpsss-layout-vertical {
+	flex-direction: column;
+	flex-wrap: nowrap;
+	align-items: flex-start;
+}
+
+.wpsss-share.wpsss-shape-circle .wpsss-btn {
+	border-radius: 50%;
 }
 
 .wpsss-share .wpsss-btn {
@@ -32,22 +47,23 @@
 	padding: var(--wpsss-padding);
 	background-color: var(--wpsss-bg);
 	color: var(--wpsss-icon);
-	border: none;
+	border: var(--wpsss-border-width) solid var(--wpsss-border-color);
 	border-radius: var(--wpsss-radius);
 	text-decoration: none;
-	box-shadow: none;
+	box-shadow: var(--wpsss-shadow);
 	line-height: 0;
 	overflow: hidden;
 	flex: 0 0 auto;
-	transition: background-color 0.15s ease, color 0.15s ease;
+	transition: background-color 0.15s ease, color 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
 }
 
 .wpsss-share .wpsss-btn:hover,
 .wpsss-share .wpsss-btn:focus {
 	background-color: var(--wpsss-bg-hover);
 	color: var(--wpsss-icon-hover);
+	border-color: var(--wpsss-border-color-hover);
 	text-decoration: none;
-	box-shadow: none;
+	box-shadow: var(--wpsss-shadow);
 	opacity: 1;
 }
 
