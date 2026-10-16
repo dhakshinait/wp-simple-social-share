@@ -4,7 +4,7 @@ Tags: social share, facebook, twitter, linkedin, email
 Requires at least: 5.8
 Tested up to: 6.7
 Requires PHP: 7.4
-Stable tag: 1.3.0
+Stable tag: 1.4.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -43,6 +43,7 @@ Under Settings → Simple Social Share you can change:
 * Border width, color, hover color, and radius
 * Box shadow (X, Y, blur, spread, color with hex/rgb/rgba)
 * Icon size and padding
+* Shortcode security: toggle URL/network overrides; same-site host allowlist for shortcode URLs
 
 The same appearance options can also be set per shortcode instance (see FAQ).
 
@@ -61,16 +62,20 @@ No. Use the shortcode or the widget so you can place them in a sidebar or anywhe
 
 = Can I override the shared URL? =
 
-Yes. Optional shortcode attributes: `[wp_simple_social_share url="https://example.com" title="My title"]`
+Yes, when **URL & network overrides** is enabled in settings: `[wp_simple_social_share url="https://yoursite.com/post" title="My title"]`
+
+The URL host must match your site (or a host listed under **Additional allowed hosts**). External hosts are rejected.
 
 = Shortcode appearance overrides (optional) =
 
 Pass any of these attributes on the shortcode. Omitted attributes use the settings page defaults.
 
-* `url` — Share URL (`https://…`)
+Sensitive attributes (`url`, `title`, `feed_url`, `networks`) require **URL & network overrides** to be enabled. Appearance attributes always work.
+
+* `url` — Share URL (`https://…`, allowed hosts only)
 * `title` — Share title (text)
-* `networks` — Comma-separated icons for this shortcode only (overrides settings). Slugs: `facebook`, `x`, `linkedin`, `whatsapp`, `telegram`, `reddit`, `pinterest`, `email`, `copy`, `feed`. Aliases: `twitter` → `x`, `rss` → `feed`
-* `feed_url` — RSS feed URL when Feed icon is enabled (`https://…`)
+* `networks` — Comma-separated icons for this shortcode only. Slugs: `facebook`, `x`, `linkedin`, `whatsapp`, `telegram`, `reddit`, `pinterest`, `email`, `copy`, `feed`. Aliases: `twitter` → `x`, `rss` → `feed`
+* `feed_url` — RSS feed URL when Feed icon is enabled (`https://…`, allowed hosts only)
 * `layout` — Icon arrangement (`horizontal` or `vertical`)
 * `mobile_horizontal` — Switch vertical to horizontal on mobile (`1` / `0` / `true` / `false`)
 * `mobile_breakpoint` — Max width for the mobile switch in px (default 768)
@@ -101,6 +106,10 @@ Example with all appearance overrides:
 `[wp_simple_social_share url="https://example.com/post" title="Post title" networks="facebook,x,linkedin,whatsapp" feed_url="https://example.com/feed" layout="vertical" mobile_horizontal="1" mobile_breakpoint="768" shape="circle" bg_color="#1a2744" bg_color_hover="#2a3a5c" icon_color="#ffffff" icon_color_hover="#eeeeee" border_width="1" border_color="#0f1a30" border_color_hover="#2a3a5c" border_radius="4" box_shadow_x="0" box_shadow_y="2" box_shadow_blur="6" box_shadow_spread="0" box_shadow_color="rgba(0,0,0,0.25)" icon_padding="8" icon_width="40" icon_height="40"]`
 
 == Changelog ==
+
+= 1.4.0 =
+* Added setting to allow or block shortcode overrides for url, title, feed_url, and networks.
+* Shortcode url and feed_url are limited to the site host plus optional additional allowed hosts.
 
 = 1.3.0 =
 * Added option to switch vertical icons to horizontal on mobile.

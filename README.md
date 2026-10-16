@@ -25,10 +25,10 @@ Pass any of these attributes on the shortcode. Omitted attributes use **Settings
 
 | Attribute | Values | Notes |
 |-----------|--------|--------|
-| `url` | `https://…` | Share URL override |
-| `title` | text | Share title override |
-| `networks` | comma-separated slugs | Icons for this shortcode only (overrides settings). Slugs: `facebook`, `x`, `linkedin`, `whatsapp`, `telegram`, `reddit`, `pinterest`, `email`, `copy`, `feed`. Aliases: `twitter` → `x`, `rss` → `feed` |
-| `feed_url` | `https://…` | RSS feed URL (when Feed icon is enabled) |
+| `url` | `https://…` | Share URL override. Same-site / allowed hosts only. Requires **URL & network overrides** in settings. |
+| `title` | text | Share title override. Requires **URL & network overrides**. |
+| `networks` | comma-separated slugs | Icons for this shortcode only. Slugs: `facebook`, `x`, `linkedin`, `whatsapp`, `telegram`, `reddit`, `pinterest`, `email`, `copy`, `feed`. Aliases: `twitter` → `x`, `rss` → `feed`. Requires **URL & network overrides**. |
+| `feed_url` | `https://…` | RSS feed URL. Allowed hosts only. Requires **URL & network overrides**. |
 | `layout` | `horizontal` \| `vertical` | Icon arrangement |
 | `mobile_horizontal` | `1` \| `0` \| `true` \| `false` | Switch vertical to horizontal on mobile |
 | `mobile_breakpoint` | number (px) | Max width for the mobile switch (default 768) |
@@ -89,6 +89,8 @@ Example with all appearance overrides:
 
 On singular posts, the current post URL and title are used when `url` / `title` are omitted. Outside that context, the site home URL and blog name are used.
 
+Shortcode `url` and `feed_url` values are rejected unless their host matches your site (or a host listed under **Additional allowed hosts**). Appearance attributes (layout, colors, size, etc.) are always allowed.
+
 ### Widget
 
 **Appearance → Widgets → Simple Social Share**
@@ -101,6 +103,8 @@ Add it to a sidebar (for example under a table of contents) to match a left-rail
 |--------|---------|
 | Networks | Facebook, X, LinkedIn, WhatsApp, Email on by default; Telegram, Reddit, Pinterest, Copy link, RSS Feed off |
 | RSS feed URL | Empty (falls back to the site RSS2 feed) |
+| URL & network overrides | On (allow shortcode `url`, `title`, `feed_url`, `networks`) |
+| Additional allowed hosts | Empty (site/home host always allowed for shortcode URLs) |
 | Icon layout | Horizontal |
 | Mobile layout | Switch vertical → horizontal on mobile (on) |
 | Mobile breakpoint | `768` px |

@@ -79,6 +79,29 @@ class WPSSS_Settings {
 		);
 
 		add_settings_section(
+			'wpsss_shortcode_security',
+			__( 'Shortcode security', 'wp-simple-social-share' ),
+			array( $this, 'render_shortcode_security_intro' ),
+			'wpsss-settings'
+		);
+
+		add_settings_field(
+			'allow_shortcode_overrides',
+			__( 'URL & network overrides', 'wp-simple-social-share' ),
+			array( $this, 'render_allow_shortcode_overrides_field' ),
+			'wpsss-settings',
+			'wpsss_shortcode_security'
+		);
+
+		add_settings_field(
+			'allowed_url_hosts',
+			__( 'Additional allowed hosts', 'wp-simple-social-share' ),
+			array( $this, 'render_allowed_url_hosts_field' ),
+			'wpsss-settings',
+			'wpsss_shortcode_security'
+		);
+
+		add_settings_section(
 			'wpsss_appearance',
 			__( 'Appearance', 'wp-simple-social-share' ),
 			array( $this, 'render_section_intro' ),
@@ -322,6 +345,28 @@ class WPSSS_Settings {
 			}
 		}
 
+		$output['allow_shortcode_overrides'] = ! empty( $input['allow_shortcode_overrides'] );
+
+		if ( isset( $input['allowed_url_hosts'] ) ) {
+			$raw_hosts = sanitize_textarea_field( (string) $input['allowed_url_hosts'] );
+			$parts     = preg_split( '/[\s,]+/', $raw_hosts, -1, PREG_SPLIT_NO_EMPTY );
+			$clean     = array();
+			if ( is_array( $parts ) ) {
+				foreach ( $parts as $part ) {
+					$part = strtolower( trim( $part ) );
+					$part = preg_replace( '#^https?://#', '', $part );
+					$part = trim( (string) $part, '/' );
+					if ( false !== strpos( $part, '/' ) ) {
+						$part = strtok( $part, '/' );
+					}
+					if ( is_string( $part ) && preg_match( '/^[a-z0-9.-]+$/i', $part ) ) {
+						$clean[] = $part;
+					}
+				}
+			}
+			$output['allowed_url_hosts'] = implode( "\n", array_values( array_unique( $clean ) ) );
+		}
+
 		if ( isset( $input['layout'] ) ) {
 			$output['layout'] = wpsss_normalize_layout( $input['layout'] );
 		}
@@ -450,6 +495,58 @@ class WPSSS_Settings {
 	 */
 	public function render_networks_intro() {
 		echo '<p>' . esc_html__( 'Choose which share icons to display.', 'wp-simple-social-share' ) . '</p>';
+	}
+
+	/**
+	 * Shortcode security section intro.
+	 */
+	public function render_shortcode_security_intro() {
+		echo '<p>' . esc_html__( 'Control whether shortcodes may override share targets and which icons appear. Appearance overrides (colors, layout, size) are always allowed.', 'wp-simple-social-share' ) . '</p>';
+	}
+
+	/**
+	 * Toggle shortcode url / title / feed_url / networks overrides.
+	 */
+	public function render_allow_shortcode_overrides_field() {
+		$options = wpsss_get_options();
+		$checked = ! empty( $options['allow_shortcode_overrides'] );
+
+		printf(
+			'<label><input type="checkbox" name="%1$s[allow_shortcode_overrides]" value="1" %2$s /> %3$s</label>',
+			esc_attr( self::OPTION_KEY ),
+			checked( $checked, true, false ),
+			esc_html__( 'Allow shortcode overrides for url, title, feed_url, and networks', 'wp-simple-social-share' )
+		);
+		echo '<p class="description">' . esc_html__( 'When unchecked, those attributes are ignored and Settings values are used instead.', 'wp-simple-social-share' ) . '</p>';
+	}
+
+	/**
+	 * Extra hosts allowed for shortcode url / feed_url.
+	 */
+	public function render_allowed_url_hosts_field() {
+		$options = wpsss_get_options();
+		$value   = isset( $options['allowed_url_hosts'] ) ? (string) $options['allowed_url_hosts'] : '';
+
+		printf(
+			'<textarea class="large-text code" rows="3" name="%1$s[allowed_url_hosts]" placeholder="cdn.example.com&#10;assets.example.com">%2$s</textarea>',
+			esc_attr( self::OPTION_KEY ),
+			esc_textarea( $value )
+		);
+
+		$site_hosts = array();
+		foreach ( array( home_url(), site_url() ) as $base ) {
+			$host = wp_parse_url( $base, PHP_URL_HOST );
+			if ( is_string( $host ) && '' !== $host ) {
+				$site_hosts[] = $host;
+			}
+		}
+		$site_hosts = array_values( array_unique( $site_hosts ) );
+
+		echo '<p class="description">';
+		echo esc_html__( 'Shortcode url and feed_url must use an allowed host. Your site host is always allowed:', 'wp-simple-social-share' );
+		echo ' <code>' . esc_html( implode( ', ', $site_hosts ) ) . '</code>. ';
+		echo esc_html__( 'Add extra hosts here (one per line). External URLs are rejected.', 'wp-simple-social-share' );
+		echo '</p>';
 	}
 
 	/**
@@ -720,14 +817,14 @@ class WPSSS_Settings {
 				<tbody>
 					<?php
 					$override_rows = array(
-						array( 'url', 'https://…', __( 'Share URL override', 'wp-simple-social-share' ) ),
-						array( 'title', __( 'text', 'wp-simple-social-share' ), __( 'Share title override', 'wp-simple-social-share' ) ),
+						array( 'url', 'https://…', __( 'Share URL override (same-site / allowed hosts only; requires URL & network overrides)', 'wp-simple-social-share' ) ),
+						array( 'title', __( 'text', 'wp-simple-social-share' ), __( 'Share title override (requires URL & network overrides)', 'wp-simple-social-share' ) ),
 						array(
 							'networks',
 							'facebook, x, linkedin, whatsapp, telegram, reddit, pinterest, email, copy, feed',
-							__( 'Comma-separated icons for this shortcode only (overrides settings). Aliases: twitter → x, rss → feed', 'wp-simple-social-share' ),
+							__( 'Comma-separated icons for this shortcode only. Aliases: twitter → x, rss → feed. Requires URL & network overrides.', 'wp-simple-social-share' ),
 						),
-						array( 'feed_url', 'https://…', __( 'RSS feed URL (when Feed icon is enabled)', 'wp-simple-social-share' ) ),
+						array( 'feed_url', 'https://…', __( 'RSS feed URL (allowed hosts only; requires URL & network overrides)', 'wp-simple-social-share' ) ),
 						array( 'layout', 'horizontal | vertical', __( 'Icon arrangement', 'wp-simple-social-share' ) ),
 						array( 'mobile_horizontal', '1 | 0 | true | false', __( 'Switch vertical to horizontal on mobile', 'wp-simple-social-share' ) ),
 						array( 'mobile_breakpoint', __( 'number (px)', 'wp-simple-social-share' ), __( 'Max width for the mobile switch (default 768)', 'wp-simple-social-share' ) ),

@@ -3,7 +3,7 @@
  * Plugin Name:       Simple Social Share
  * Plugin URI:        https://github.com/dhakshinait/wp-simple-social-share/
  * Description:       Minimal social share buttons (Facebook, X, LinkedIn, WhatsApp, Telegram, Reddit, Pinterest, Email, Copy link). Place via shortcode or widget.
- * Version:           1.3.0
+ * Version:           1.4.0
  * Requires at least: 5.8
  * Requires PHP:      7.4
  * Author:            Dhakshina
@@ -15,7 +15,7 @@
 
 defined( 'ABSPATH' ) || exit;
 
-define( 'WPSSS_VERSION', '1.3.0' );
+define( 'WPSSS_VERSION', '1.4.0' );
 define( 'WPSSS_PLUGIN_FILE', __FILE__ );
 define( 'WPSSS_PLUGIN_DIR', plugin_dir_path( __FILE__ ) );
 define( 'WPSSS_PLUGIN_URL', plugin_dir_url( __FILE__ ) );
@@ -45,11 +45,13 @@ function wpsss_default_options() {
 			'copy'      => false,
 			'feed'      => false,
 		),
-		'feed_url'           => '',
-		'layout'               => 'horizontal',
-		'mobile_horizontal'    => true,
-		'mobile_breakpoint'    => 768,
-		'icon_shape'           => 'square',
+		'feed_url'                     => '',
+		'allow_shortcode_overrides'    => true,
+		'allowed_url_hosts'            => '',
+		'layout'                       => 'horizontal',
+		'mobile_horizontal'            => true,
+		'mobile_breakpoint'            => 768,
+		'icon_shape'                   => 'square',
 		'bg_color'           => '#1a2744',
 		'bg_color_hover'     => '#2a3a5c',
 		'icon_color'         => '#ffffff',
@@ -100,6 +102,102 @@ function wpsss_get_options() {
  */
 function wpsss_normalize_layout( $layout ) {
 	return ( 'vertical' === $layout ) ? 'vertical' : 'horizontal';
+}
+
+/**
+ * Hosts allowed for shortcode url / feed_url overrides.
+ *
+ * Always includes the site and home hosts. Extra hosts come from settings.
+ *
+ * @param array<string, mixed>|null $options Optional options.
+ * @return string[] Lowercase hostnames.
+ */
+function wpsss_get_allowed_url_hosts( $options = null ) {
+	if ( null === $options ) {
+		$options = wpsss_get_options();
+	}
+
+	$hosts = array();
+	foreach ( array( home_url(), site_url() ) as $base ) {
+		$host = wp_parse_url( $base, PHP_URL_HOST );
+		if ( is_string( $host ) && '' !== $host ) {
+			$hosts[] = strtolower( $host );
+		}
+	}
+
+	$extra = isset( $options['allowed_url_hosts'] ) ? (string) $options['allowed_url_hosts'] : '';
+	if ( '' !== trim( $extra ) ) {
+		$parts = preg_split( '/[\s,]+/', $extra, -1, PREG_SPLIT_NO_EMPTY );
+		if ( is_array( $parts ) ) {
+			foreach ( $parts as $part ) {
+				$part = strtolower( trim( $part ) );
+				$part = preg_replace( '#^https?://#', '', $part );
+				$part = trim( (string) $part, '/' );
+				// Strip path/query if a full URL was pasted.
+				if ( false !== strpos( $part, '/' ) ) {
+					$part = strtok( $part, '/' );
+				}
+				if ( is_string( $part ) && preg_match( '/^[a-z0-9.-]+$/i', $part ) ) {
+					$hosts[] = $part;
+				}
+			}
+		}
+	}
+
+	/**
+	 * Filter allowed hosts for shortcode share/feed URL overrides.
+	 *
+	 * @param string[]              $hosts   Lowercase hostnames.
+	 * @param array<string, mixed>  $options Plugin options.
+	 */
+	$hosts = apply_filters( 'wpsss_allowed_url_hosts', array_values( array_unique( $hosts ) ), $options );
+
+	return is_array( $hosts ) ? $hosts : array();
+}
+
+/**
+ * Sanitize a share/feed URL and require an allowlisted host.
+ *
+ * @param mixed                     $url     Raw URL.
+ * @param array<string, mixed>|null $options Optional options for extra hosts.
+ * @return string Empty string when invalid or host not allowed.
+ */
+function wpsss_sanitize_allowed_share_url( $url, $options = null ) {
+	if ( ! is_string( $url ) ) {
+		return '';
+	}
+
+	$url = esc_url_raw( trim( $url ), array( 'http', 'https' ) );
+	if ( ! $url ) {
+		return '';
+	}
+
+	$host = wp_parse_url( $url, PHP_URL_HOST );
+	if ( ! is_string( $host ) || '' === $host ) {
+		return '';
+	}
+
+	$host    = strtolower( $host );
+	$allowed = wpsss_get_allowed_url_hosts( $options );
+	if ( empty( $allowed ) || ! in_array( $host, $allowed, true ) ) {
+		return '';
+	}
+
+	return $url;
+}
+
+/**
+ * Whether shortcode may override url / title / feed_url / networks.
+ *
+ * @param array<string, mixed>|null $options Optional options.
+ * @return bool
+ */
+function wpsss_allow_shortcode_overrides( $options = null ) {
+	if ( null === $options ) {
+		$options = wpsss_get_options();
+	}
+
+	return ! empty( $options['allow_shortcode_overrides'] );
 }
 
 /**
@@ -278,7 +376,9 @@ function wpsss_apply_option_overrides( $options, $overrides ) {
 		return $options;
 	}
 
-	if ( isset( $overrides['networks'] ) && '' !== $overrides['networks'] ) {
+	$allow_sensitive = wpsss_allow_shortcode_overrides( $options );
+
+	if ( $allow_sensitive && isset( $overrides['networks'] ) && '' !== $overrides['networks'] ) {
 		$networks = wpsss_parse_networks_attr( $overrides['networks'] );
 		if ( null !== $networks ) {
 			$options['networks'] = $networks;
@@ -332,8 +432,8 @@ function wpsss_apply_option_overrides( $options, $overrides ) {
 		}
 	}
 
-	if ( isset( $overrides['feed_url'] ) && is_string( $overrides['feed_url'] ) && '' !== trim( $overrides['feed_url'] ) ) {
-		$feed_url = esc_url_raw( trim( $overrides['feed_url'] ), array( 'http', 'https' ) );
+	if ( $allow_sensitive && isset( $overrides['feed_url'] ) && is_string( $overrides['feed_url'] ) && '' !== trim( $overrides['feed_url'] ) ) {
+		$feed_url = wpsss_sanitize_allowed_share_url( $overrides['feed_url'], $options );
 		if ( $feed_url ) {
 			$options['feed_url'] = $feed_url;
 		}
@@ -388,7 +488,7 @@ function wpsss_get_css_variables( $options = null ) {
 	$radius             = ( 'circle' === $shape ) ? '50%' : absint( $options['border_radius'] ) . 'px';
 
 	return sprintf(
-		'--wpsss-bg:%1$s;--wpsss-bg-hover:%2$s;--wpsss-icon:%3$s;--wpsss-icon-hover:%4$s;--wpsss-radius:%5$s;--wpsss-padding:%6$dpx;--wpsss-width:%7$dpx;--wpsss-height:%8$dpx;--wpsss-border-width:%9$dpx;--wpsss-border-color:%10$s;--wpsss-border-color-hover:%11$s;--wpsss-shadow:%12$s;',
+		'--wpsss-bg:%1$s;--wpsss-bg-hover:%2$s;--wpsss-icon:%3$s;--wpsss-icon-hover:%4$s;--wpsss-radius:%5$s;--wpsss-padding:%6$dpx;--wpsss-width:%7$dpx;--wpsss-height:%8$dpx;--wpsss-btn-bw:%9$dpx;--wpsss-btn-bc:%10$s;--wpsss-btn-bc-hover:%11$s;--wpsss-shadow:%12$s;',
 		sanitize_hex_color( $options['bg_color'] ) ? $options['bg_color'] : '#1a2744',
 		sanitize_hex_color( $options['bg_color_hover'] ) ? $options['bg_color_hover'] : '#2a3a5c',
 		sanitize_hex_color( $options['icon_color'] ) ? $options['icon_color'] : '#ffffff',

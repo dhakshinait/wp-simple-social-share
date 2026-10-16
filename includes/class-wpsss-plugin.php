@@ -146,21 +146,34 @@ class WPSSS_Plugin {
 			'wp_simple_social_share'
 		);
 
-		$url = '';
-		if ( '' !== $atts['url'] ) {
-			$url = esc_url_raw( $atts['url'], array( 'http', 'https' ) );
+		$base_options     = wpsss_get_options();
+		$allow_sensitive  = wpsss_allow_shortcode_overrides( $base_options );
+		$url              = '';
+		$title            = '';
+
+		if ( $allow_sensitive ) {
+			if ( '' !== $atts['url'] ) {
+				$url = wpsss_sanitize_allowed_share_url( $atts['url'], $base_options );
+			}
+			if ( '' !== $atts['title'] ) {
+				$title = sanitize_text_field( $atts['title'] );
+			}
 		}
 
 		$overrides = $atts;
 		unset( $overrides['url'], $overrides['title'] );
 
-		$options = wpsss_apply_option_overrides( wpsss_get_options(), $overrides );
+		if ( ! $allow_sensitive ) {
+			unset( $overrides['networks'], $overrides['feed_url'] );
+		}
+
+		$options = wpsss_apply_option_overrides( $base_options, $overrides );
 		self::enqueue_assets( $options );
 
 		return WPSSS_Renderer::render(
 			array(
 				'url'     => $url,
-				'title'   => sanitize_text_field( $atts['title'] ),
+				'title'   => $title,
 				'options' => $overrides,
 			)
 		);

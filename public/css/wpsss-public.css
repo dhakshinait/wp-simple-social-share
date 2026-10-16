@@ -3,6 +3,8 @@
  */
 
 .wpsss-share {
+	/* Var names avoid "border-width"/"border-color" substrings so WP core
+	   rules like [style*="border-width"] do not force a container border. */
 	--wpsss-bg: #1a2744;
 	--wpsss-bg-hover: #2a3a5c;
 	--wpsss-icon: #ffffff;
@@ -11,9 +13,9 @@
 	--wpsss-padding: 8px;
 	--wpsss-width: 40px;
 	--wpsss-height: 40px;
-	--wpsss-border-width: 0px;
-	--wpsss-border-color: #1a2744;
-	--wpsss-border-color-hover: #2a3a5c;
+	--wpsss-btn-bw: 0px;
+	--wpsss-btn-bc: #1a2744;
+	--wpsss-btn-bc-hover: #2a3a5c;
 	--wpsss-shadow: none;
 
 	display: flex;
@@ -23,6 +25,7 @@
 	gap: 8px;
 	margin: 0;
 	padding: 0;
+	border: 0 none;
 	list-style: none;
 }
 
@@ -56,7 +59,7 @@
 	padding: var(--wpsss-padding);
 	background-color: var(--wpsss-bg);
 	color: var(--wpsss-icon);
-	border: var(--wpsss-border-width) solid var(--wpsss-border-color);
+	border: var(--wpsss-btn-bw) solid var(--wpsss-btn-bc);
 	border-radius: var(--wpsss-radius);
 	text-decoration: none;
 	box-shadow: var(--wpsss-shadow);
@@ -70,7 +73,7 @@
 .wpsss-share .wpsss-btn:focus {
 	background-color: var(--wpsss-bg-hover);
 	color: var(--wpsss-icon-hover);
-	border-color: var(--wpsss-border-color-hover);
+	border-color: var(--wpsss-btn-bc-hover);
 	text-decoration: none;
 	box-shadow: var(--wpsss-shadow);
 	opacity: 1;
